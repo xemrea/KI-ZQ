@@ -34,11 +34,14 @@ def capture_camera():
         cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     if not cap.isOpened():
         cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+    # Kamera aufwärmen
+    for _ in range(5):
+        cap.read()
     while True:
         ret, frame = cap.read()
         if ret:
             with camera_lock:
-                # JPEG encode für Transfer
                 _, buffer = cv2.imencode('.jpg', frame)
                 camera_frame = base64.b64encode(buffer).decode('utf-8')
         else:
