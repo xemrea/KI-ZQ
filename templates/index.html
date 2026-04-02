@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste Sorting KI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; color: #fff; font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        h1 { font-size: 2rem; margin-bottom: 20px; color: #e94560; }
+        #camera-container { position: relative; width: 640px; height: 480px; background: #000; border-radius: 12px; overflow: hidden; border: 3px solid #e94560; }
+        #camera-feed { width: 100%; height: 100%; object-fit: cover; }
+        #no-camera { display: none; align-items: center; justify-content: center; height: 100%; color: #888; font-size: 1.2rem; }
+        #result-overlay { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px 16px; border-radius: 8px; font-size: 1.1rem; }
+        #classify-btn { margin-top: 20px; padding: 14px 40px; font-size: 1.2rem; background: #e94560; color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
+        #classify-btn:hover { background: #c73652; }
+        #classify-btn:disabled { background: #555; cursor: not-allowed; }
+        #result-box { margin-top: 16px; font-size: 1.3rem; min-height: 30px; }
+        .label { font-weight: bold; color: #0f3460; padding: 6px 14px; border-radius: 6px; }
+        .plastik { background: #ffd700; color: #000; }
+        .papier { background: #4fc3f7; color: #000; }
+        .other { background: #aaa; color: #000; }
+    </style>
+</head>
+<body>
+    <h1>Waste Sorting KI</h1>
+    <div id="camera-container">
+        <img id="camera-feed" alt="Kamera" />
+        <div id="no-camera">Keine Kamera verfügbar</div>
+        <div id="result-overlay">Bereit</div>
+    </div>
+    <button id="classify-btn" onclick="classify()">Scannen</button>
+    <div id="result-box"></div>
+
+    <script>
+        const feed = document.getElementById('camera-feed');
+        const noCamera = document.getElementById('no-camera');
+        const overlay = document.getElementById('result-overlay');
+        const resultBox = document.getElementById('result-box');
+        let lastFrame = null;
+
+        async function updateFrame() {
+            try {
+                const res = await fetch('/api/camera-frame');
+                const data = await res.json();
+                if (data.frame) {
+                    feed.src = 'data:image/jpeg;base64,' + data.frame;
+                    feed.style.display = 'block';
+                    noCamera.style.display = 'none';
+                    lastFrame = data.frame;
+                } else {
+                    feed.style.display = 'none';
+                    noCamera.style.display = 'flex';
+                }
+            } catch {}
+        }
+
+        async function classify() {
+            if (!lastFrame) { alert('Kein Kamerabild verfügbar'); return; }
+            const btn = document.getElementById('classify-btn');
+            btn.disabled = true;
+            btn.textContent = 'Scannen...';
+            overlay.textContent = 'Analysiere...';
+            try {
+                const res = await fetch('/api/classify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: 'data:image/jpeg;base64,' + lastFrame })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const label = data.label;
+                    const conf = (data.confidence * 100).toFixed(1);
+                    overlay.textContent = label + ' (' + conf + '%)';
+                    let cls = 'other';
+                    if (label.toLowerCase().includes('plastik')) cls = 'plastik';
+                    else if (label.toLowerCase().includes('papier')) cls = 'papier';
+                    resultBox.innerHTML = '<span class="label ' + cls + '">' + label + '</span> &mdash; ' + conf + '% Sicherheit';
+                } else {
+                    overlay.textContent = 'Fehler';
+                    resultBox.textContent = 'Fehler: ' + data.error;
+                }
+            } catch (e) {
+                resultBox.textContent = 'Verbindungsfehler';
+            }
+            btn.disabled = false;
+            btn.textContent = 'Scannen';
+        }
+
+        setInterval(updateFrame, 100);
+        updateFrame();
+    </script>
+</body>
+</html>
