@@ -29,9 +29,11 @@ camera_lock = threading.Lock()
 
 def capture_camera():
     global camera_frame
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     if not cap.isOpened():
         cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+    if not cap.isOpened():
+        cap = cv2.VideoCapture(0)
     while True:
         ret, frame = cap.read()
         if ret:
