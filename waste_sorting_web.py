@@ -30,6 +30,8 @@ camera_lock = threading.Lock()
 def capture_camera():
     global camera_frame
     cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
     while True:
         ret, frame = cap.read()
         if ret:
@@ -37,6 +39,8 @@ def capture_camera():
                 # JPEG encode für Transfer
                 _, buffer = cv2.imencode('.jpg', frame)
                 camera_frame = base64.b64encode(buffer).decode('utf-8')
+        else:
+            time.sleep(0.1)
 
 # Kamera-Thread starten
 camera_thread = threading.Thread(target=capture_camera, daemon=True)
