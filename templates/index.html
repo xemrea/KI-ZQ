@@ -155,23 +155,11 @@
         let scene, camera, renderer, stickman, trash;
         let lastFrame = null;
 
-        // Kamera-Frame Polling
-        async function pollCamera() {
-            try {
-                const res = await fetch('/api/camera-frame');
-                const data = await res.json();
-                if (data.frame) {
-                    document.getElementById('cameraFeed').src = 'data:image/jpeg;base64,' + data.frame;
-                    lastFrame = data.frame;
-                    document.getElementById('status').textContent = 'Ready';
-                } else {
-                    document.getElementById('status').textContent = 'Keine Kamera';
-                }
-            } catch {
-                document.getElementById('status').textContent = 'Fehler';
-            }
-            setTimeout(pollCamera, 100);
-        }
+        // MJPEG Stream direkt in img-Tag
+        document.getElementById('cameraFeed').src = '/api/camera-feed';
+        document.getElementById('cameraFeed').onload = () => {
+            document.getElementById('status').textContent = 'Ready';
+        };
 
         // Three.js Setup
         function initScene() {
@@ -293,7 +281,6 @@
         }
 
         async function captureAndClassify() {
-            if (!lastFrame) { alert('Kein Kamerabild verfügbar'); return; }
             const btn = document.getElementById('scanBtn');
             const loading = document.getElementById('loading');
             btn.disabled = true;
@@ -301,11 +288,7 @@
             document.getElementById('status').textContent = 'Scanning...';
 
             try {
-                const res = await fetch('/api/classify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: 'data:image/jpeg;base64,' + lastFrame })
-                });
+                const res = await fetch('/api/classify', { method: 'POST' });
                 const data = await res.json();
 
                 if (data.success) {
