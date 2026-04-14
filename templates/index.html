@@ -1,143 +1,347 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Waste Sorting Master - AI Edition</title>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            min-height: 100vh;
-            overflow: hidden;
+
+   <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+        background: linear-gradient(180deg, #0b0b0f 0%, #16161d 100%);
+        min-height: 100vh;
+        overflow: hidden;
+        color: #f5f5f7;
+    }
+
+    .container {
+        display: flex;
+        height: 100vh;
+        gap: 24px;
+        padding: 24px;
+    }
+
+    .left-panel,
+    .right-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: rgba(28, 28, 30, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 28px;
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        box-shadow:
+            0 10px 30px rgba(0, 0, 0, 0.35),
+            inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        overflow: hidden;
+        padding: 24px;
+    }
+
+    .left-panel {
+        gap: 18px;
+    }
+
+    .right-panel {
+        justify-content: space-between;
+    }
+
+    .title {
+        color: #f5f5f7;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin-bottom: 4px;
+        text-transform: none;
+        background: none;
+        -webkit-text-fill-color: unset;
+    }
+
+    .camera-feed {
+        flex: 1;
+        background: #0f1115;
+        border-radius: 22px;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.03),
+            0 8px 24px rgba(0, 0, 0, 0.28);
+    }
+
+    .camera-feed canvas {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .camera-feed .overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0.04) 0%,
+            rgba(255, 255, 255, 0) 30%,
+            rgba(0, 0, 0, 0.18) 100%
+        );
+        pointer-events: none;
+    }
+
+    .controls {
+        display: flex;
+        gap: 12px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 14px 18px;
+        border: none;
+        border-radius: 999px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        letter-spacing: -0.01em;
+    }
+
+    .btn-scan {
+        background: #0a84ff;
+        color: #ffffff;
+        box-shadow: 0 6px 18px rgba(10, 132, 255, 0.28);
+    }
+
+    .btn-scan:hover {
+        transform: translateY(-1px);
+        background: #3395ff;
+    }
+
+    .btn-scan:active {
+        transform: translateY(0);
+    }
+
+    .btn-scan:disabled {
+        background: #3a3a3c;
+        color: #8e8e93;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .btn-reset {
+        background: rgba(255, 255, 255, 0.06);
+        color: #f5f5f7;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-reset:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .stat-card {
+        background: rgba(44, 44, 46, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 20px;
+        padding: 16px;
+        text-align: center;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #a1a1a6;
+        margin-bottom: 6px;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        font-size: 22px;
+        font-weight: 600;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+    }
+
+    .canvas-container {
+        flex: 1;
+        border-radius: 22px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #111216 0%, #1b1d24 100%);
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.03),
+            0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .result-panel {
+        margin-top: 18px;
+        background: rgba(36, 36, 38, 0.82);
+        padding: 18px 20px;
+        border-radius: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        color: #f5f5f7;
+        text-align: center;
+        opacity: 0;
+        transition: all 0.4s ease;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .result-panel.active {
+        opacity: 1;
+        animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(16px);
+            opacity: 0;
         }
-        .container { display: flex; height: 100vh; gap: 20px; padding: 20px; }
-        .left-panel {
-            flex: 1; display: flex; flex-direction: column; gap: 15px;
-            background: rgba(255,255,255,0.1); padding: 20px; border-radius: 20px;
-            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); overflow: hidden;
+        to {
+            transform: translateY(0);
+            opacity: 1;
         }
-        .camera-feed {
-            flex: 1; background: #000; border-radius: 15px; overflow: hidden;
-            position: relative; border: 2px solid rgba(0,255,100,0.3);
-            box-shadow: 0 0 20px rgba(0,255,100,0.2);
+    }
+
+    .result-label {
+        font-size: 30px;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 6px;
+        letter-spacing: -0.03em;
+    }
+
+    .result-confidence {
+        font-size: 15px;
+        color: #a1a1a6;
+    }
+
+    .confidence-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        margin-top: 12px;
+        overflow: hidden;
+    }
+
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #0a84ff 0%, #5ac8fa 100%);
+        width: 0%;
+        transition: width 0.5s ease;
+        border-radius: 999px;
+    }
+
+    .loading {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #f5f5f7;
+        font-size: 16px;
+        text-align: center;
+        z-index: 10;
+        background: rgba(28, 28, 30, 0.88);
+        padding: 16px 20px;
+        border-radius: 18px;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .loading.active {
+        display: block;
+    }
+
+    .spinner {
+        width: 34px;
+        height: 34px;
+        border: 3px solid rgba(255, 255, 255, 0.12);
+        border-top-color: #0a84ff;
+        border-radius: 50%;
+        margin: 0 auto 10px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
         }
-        .camera-feed img { width: 100%; height: 100%; object-fit: cover; }
-        .camera-feed .overlay {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.3) 100%);
-            pointer-events: none;
+        to {
+            transform: rotate(360deg);
         }
-        .controls { display: flex; gap: 10px; }
-        .btn {
-            flex: 1; padding: 15px 20px; border: none; border-radius: 12px;
-            font-size: 16px; font-weight: bold; cursor: pointer;
-            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;
-        }
-        .btn-scan {
-            background: linear-gradient(135deg, #00ff87 0%, #00b386 100%);
-            color: #000; box-shadow: 0 5px 20px rgba(0,255,135,0.3);
-        }
-        .btn-scan:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,255,135,0.5); }
-        .btn-scan:active { transform: translateY(-1px); }
-        .btn-scan:disabled { background: #555; color: #aaa; cursor: not-allowed; transform: none; box-shadow: none; }
-        .btn-reset {
-            background: rgba(255,255,255,0.1); color: #fff;
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-        .btn-reset:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.5); }
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-card {
-            background: rgba(0,255,135,0.1); padding: 12px; border-radius: 10px;
-            border: 1px solid rgba(0,255,135,0.3); text-align: center; color: #fff;
-        }
-        .stat-label { font-size: 12px; opacity: 0.7; margin-bottom: 5px; }
-        .stat-value { font-size: 20px; font-weight: bold; color: #00ff87; }
-        .right-panel {
-            flex: 1; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 20px;
-            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2);
-            display: flex; flex-direction: column;
-        }
-        .canvas-container { flex: 1; border-radius: 15px; overflow: hidden; background: #0a0a1a; position: relative; }
-        .result-panel {
-            margin-top: 15px; background: rgba(0,255,135,0.1); padding: 15px 20px;
-            border-radius: 15px; border: 2px solid rgba(0,255,135,0.3);
-            color: #fff; text-align: center; opacity: 0; transition: all 0.5s ease;
-        }
-        .result-panel.active { opacity: 1; animation: slideUp 0.5s ease; }
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .result-label { font-size: 28px; font-weight: bold; color: #00ff87; margin-bottom: 6px; }
-        .result-confidence { font-size: 16px; opacity: 0.9; }
-        .confidence-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 4px; margin-top: 8px; overflow: hidden; }
-        .confidence-fill { height: 100%; background: linear-gradient(90deg, #00ff87 0%, #00b386 100%); width: 0%; transition: width 0.5s ease; }
-        .title {
-            color: #fff; text-align: center; font-size: 22px; font-weight: bold;
-            margin-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;
-            background: linear-gradient(135deg, #00ff87, #00b386);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .loading {
-            display: none; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); color: #00ff87;
-            font-size: 18px; text-align: center; z-index: 10;
-        }
-        .loading.active { display: block; }
-        .spinner {
-            width: 40px; height: 40px; border: 3px solid rgba(0,255,135,0.2);
-            border-top-color: #00ff87; border-radius: 50%; margin: 0 auto 10px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    </style>
+    }
+</style>
 </head>
+
 <body>
     <div class="container">
         <div class="left-panel">
             <h1 class="title">Scan</h1>
+
             <div class="camera-feed">
-                <img id="cameraFeed" src="" alt="Camera Feed">
+                <canvas id="cameraCanvas"></canvas>
                 <div class="overlay"></div>
+
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
                     <div>Klassifiziere...</div>
                 </div>
             </div>
+
             <div class="controls">
                 <button class="btn btn-scan" id="scanBtn" onclick="captureAndClassify()">SCAN</button>
                 <button class="btn btn-reset" onclick="resetAnimation()">RESET</button>
             </div>
+
             <div class="stats">
                 <div class="stat-card">
                     <div class="stat-label">Letzte Klasse</div>
                     <div class="stat-value" id="lastClass">-</div>
                 </div>
+
                 <div class="stat-card">
                     <div class="stat-label">Confidence</div>
                     <div class="stat-value" id="lastConfidence">-</div>
                 </div>
+
                 <div class="stat-card">
                     <div class="stat-label">Scans</div>
                     <div class="stat-value" id="scanCount">0</div>
                 </div>
+
                 <div class="stat-card">
                     <div class="stat-label">Status</div>
-                    <div class="stat-value" id="status">Ready</div>
+                    <div class="stat-value" id="status">Connecting...</div>
                 </div>
             </div>
         </div>
 
         <div class="right-panel">
             <h1 class="title">Mülltrennung</h1>
+
             <div class="canvas-container" id="canvasContainer"></div>
+
             <div class="result-panel" id="resultPanel">
                 <div class="result-label" id="resultLabel">-</div>
                 <div class="result-confidence" id="resultConfidenceText">-</div>
+
                 <div class="confidence-bar">
                     <div class="confidence-fill" id="confidenceFill"></div>
                 </div>
@@ -146,25 +350,101 @@
     </div>
 
     <script>
+        // ========== STATE & CONFIG ==========
         let scanCount = 0;
         let scene, cam, renderer;
-        let bins = {}; // { papier: {group, lid, pivot, color}, muell: {...}, sonstiges: {...} }
+        let bins = {};
         let activeBin = null;
+        let robot, robotParts = {};
+        let scanTable;
+        let currentTableObject = null;
 
-        // Kamera-Stream
-        document.getElementById('cameraFeed').src = '/api/camera-feed';
+        // ========== CAMERA STREAM SETUP (VERBESSERT) ==========
+        const CAMERA_URL = 'http://localhost:5000/api/camera-feed';
+        let cameraCanvas = null;
+        let cameraCtx = null;
+        let cameraStreamImg = null;
+        let cameraStreamActive = true;
 
-        // Label → Bin mapping
+        function initCameraStream() {
+            cameraCanvas = document.getElementById('cameraCanvas');
+            cameraCtx = cameraCanvas.getContext('2d');
+            cameraCanvas.width = 640;
+            cameraCanvas.height = 480;
+
+            // Erstelle ein globales Image-Element für den MJPEG-Stream
+            cameraStreamImg = new Image();
+            cameraStreamImg.crossOrigin = 'anonymous';
+
+            const startStream = () => {
+                if (!cameraStreamActive) return;
+
+                // Cache-busting: füge Timestamp hinzu
+                cameraStreamImg.src = CAMERA_URL + '?t=' + Date.now();
+
+                let frameCount = 0;
+
+                const drawLoop = () => {
+                    if (!cameraStreamActive) return;
+
+                    try {
+                        cameraCtx.drawImage(cameraStreamImg, 0, 0, cameraCanvas.width, cameraCanvas.height);
+                        frameCount++;
+                    } catch (e) {
+                        // Cross-origin oder noch nicht geladen - ignorieren
+                    }
+
+                    requestAnimationFrame(drawLoop);
+                };
+
+                cameraStreamImg.onload = () => {
+                    console.log('✓ Camera stream connected');
+                    document.getElementById('status').textContent = 'Ready';
+                    drawLoop();
+                };
+
+                cameraStreamImg.onerror = () => {
+                    console.warn('⚠ Camera stream error, reconnecting...');
+                    document.getElementById('status').textContent = 'Reconnecting...';
+                    setTimeout(startStream, 2000);
+                };
+
+                cameraStreamImg.onabort = () => {
+                    console.warn('⚠ Camera stream aborted');
+                    setTimeout(startStream, 2000);
+                };
+            };
+
+            startStream();
+        }
+
+        // Cleanup bei Seite schließen
+        window.addEventListener('beforeunload', () => {
+            cameraStreamActive = false;
+            if (cameraStreamImg) cameraStreamImg.src = '';
+        });
+
+        // ========== UTILITY FUNCTIONS ==========
         function getBinKey(label) {
             const l = label.toLowerCase();
+
             if (l.includes('papier')) return 'papier';
             if (l.includes('plastik') || l.includes('müll') || l.includes('muell')) return 'muell';
+
             return 'sonstiges';
         }
 
-        // Three.js
+        function darkenColor(hex) {
+            const r = Math.floor(((hex >> 16) & 0xff) * 0.6);
+            const g = Math.floor(((hex >> 8) & 0xff) * 0.6);
+            const b = Math.floor((hex & 0xff) * 0.6);
+            return (r << 16) | (g << 8) | b;
+        }
+
+        // ========== THREE.JS SCENE INIT ==========
         function initScene() {
             const container = document.getElementById('canvasContainer');
+
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0a0a1a);
             scene.fog = new THREE.Fog(0x0a0a1a, 20, 40);
@@ -179,16 +459,18 @@
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
 
-            // Lichter
+            // Lights
             scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-            const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+
+            window.sun = new THREE.DirectionalLight(0xffffff, 1.0);
+            const sun = window.sun;
             sun.position.set(5, 10, 5);
             sun.castShadow = true;
             sun.shadow.mapSize.width = 1024;
             sun.shadow.mapSize.height = 1024;
             scene.add(sun);
 
-            // Boden
+            // Floor & Grid
             const floor = new THREE.Mesh(
                 new THREE.PlaneGeometry(30, 30),
                 new THREE.MeshPhongMaterial({ color: 0x111122 })
@@ -202,10 +484,13 @@
             grid.position.y = -2.49;
             scene.add(grid);
 
-            // 3 Mülleimer erstellen
-            createBin('papier',    -4,  0x4488ff, 'PAPIER');
-            createBin('muell',      0,  0x44cc66, 'MÜLL');
-            createBin('sonstiges',  4,  0xff8833, 'SONSTIGES');
+            // Bins & Scan Table
+            createBin('papier', -4, 0x4488ff, 'PAPIER', -3);
+            createBin('muell', 0, 0x44cc66, 'PLASTIK', -3);
+            createBin('sonstiges', 4, 0xff8833, 'SONSTIGES', -3);
+
+            createScanTable();
+            createRobot();
 
             animate();
 
@@ -216,29 +501,31 @@
             });
         }
 
-        function createBin(key, x, color, label) {
+        // ========== SCENE CREATION FUNCTIONS ==========
+        function createBin(key, x, color, label, z = 0) {
             const group = new THREE.Group();
-            group.position.set(x, -2.5, 0);
+            group.position.set(x, -2.5, z);
 
             const mat = new THREE.MeshPhongMaterial({ color, shininess: 80 });
             const darkMat = new THREE.MeshPhongMaterial({ color: darkenColor(color), shininess: 60 });
 
-            // Körper
             const body = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.75, 3, 32), mat);
             body.position.y = 1.5;
             body.castShadow = true;
             body.receiveShadow = true;
             group.add(body);
 
-            // Streifen oben
             const stripe = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.92, 0.92, 0.15, 32),
-                new THREE.MeshPhongMaterial({ color: 0xffffff, opacity: 0.15, transparent: true })
+                new THREE.MeshPhongMaterial({
+                    color: 0xffffff,
+                    opacity: 0.15,
+                    transparent: true
+                })
             );
             stripe.position.y = 2.85;
             group.add(stripe);
 
-            // Deckel-Pivot (Scharnier hinten)
             const lidPivot = new THREE.Group();
             lidPivot.position.set(0, 3.05, -0.9);
             group.add(lidPivot);
@@ -250,7 +537,6 @@
             lid.position.set(0, 0, 0.9);
             lidPivot.add(lid);
 
-            // Knopf auf Deckel
             const knob = new THREE.Mesh(
                 new THREE.SphereGeometry(0.15, 16, 16),
                 new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 100 })
@@ -258,9 +544,10 @@
             knob.position.set(0, 0.12, 0.9);
             lidPivot.add(knob);
 
-            // Label als Sprite
             const canvas = document.createElement('canvas');
-            canvas.width = 256; canvas.height = 64;
+            canvas.width = 256;
+            canvas.height = 64;
+
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
             ctx.fillRect(0, 0, 256, 64);
@@ -269,6 +556,7 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(label, 128, 32);
+
             const tex = new THREE.CanvasTexture(canvas);
             const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
             sprite.scale.set(2.5, 0.6, 1);
@@ -276,40 +564,293 @@
             group.add(sprite);
 
             scene.add(group);
-
             bins[key] = { group, lidPivot, color, baseY: group.position.y };
         }
 
-        function darkenColor(hex) {
-            const r = Math.floor(((hex >> 16) & 0xff) * 0.6);
-            const g = Math.floor(((hex >> 8) & 0xff) * 0.6);
-            const b = Math.floor((hex & 0xff) * 0.6);
-            return (r << 16) | (g << 8) | b;
+        function createScanTable() {
+            const group = new THREE.Group();
+            group.position.set(-7, -2.5, 1.5);
+
+            const top = new THREE.Mesh(
+                new THREE.BoxGeometry(3.2, 0.18, 2.0),
+                new THREE.MeshPhongMaterial({
+                    color: 0x1e2b3c,
+                    emissive: 0x113344,
+                    emissiveIntensity: 0.25,
+                    shininess: 100
+                })
+            );
+            top.position.y = 1.9;
+            top.castShadow = true;
+            top.receiveShadow = true;
+            group.add(top);
+
+            const rimMat = new THREE.MeshPhongMaterial({
+                color: 0x00d9ff,
+                emissive: 0x00d9ff,
+                emissiveIntensity: 0.6,
+                transparent: true,
+                opacity: 0.7
+            });
+
+            const rim = new THREE.Mesh(new THREE.BoxGeometry(3.28, 0.04, 2.08), rimMat);
+            rim.position.y = 2.02;
+            group.add(rim);
+
+            for (const x of [-1.35, 1.35]) {
+                for (const z of [-0.8, 0.8]) {
+                    const leg = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.08, 0.1, 1.9, 16),
+                        new THREE.MeshPhongMaterial({ color: 0x667788, shininess: 80 })
+                    );
+                    leg.position.set(x, 0.95, z);
+                    leg.castShadow = true;
+                    group.add(leg);
+                }
+            }
+
+            const holo = new THREE.Mesh(
+                new THREE.TorusGeometry(0.65, 0.03, 16, 64),
+                new THREE.MeshPhongMaterial({
+                    color: 0x00eaff,
+                    emissive: 0x00eaff,
+                    emissiveIntensity: 0.7,
+                    transparent: true,
+                    opacity: 0.7
+                })
+            );
+            holo.rotation.x = Math.PI / 2;
+            holo.position.y = 2.35;
+            group.add(holo);
+
+            scene.add(group);
+            scanTable = { group, top, rim, rimMat, holo };
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            // Leichte Idle-Bewegung aller Bins
-            const t = Date.now() * 0.001;
-            Object.values(bins).forEach((bin, i) => {
-                bin.group.position.y = bin.baseY + Math.sin(t + i * 1.2) * 0.04;
+        function createRobot() {
+            const group = new THREE.Group();
+            group.position.set(-2.2, -2.5, 1.2);
+
+            const metal = new THREE.MeshPhongMaterial({
+                color: 0xb8c7d9,
+                shininess: 120
             });
-            renderer.render(scene, cam);
+
+            const darkMetal = new THREE.MeshPhongMaterial({
+                color: 0x4a5568,
+                shininess: 90
+            });
+
+            const glow = new THREE.MeshPhongMaterial({
+                color: 0x00eaff,
+                emissive: 0x00eaff,
+                emissiveIntensity: 0.8
+            });
+
+            const base = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.7, 0.85, 0.35, 24),
+                darkMetal
+            );
+            base.position.y = 0.2;
+            base.castShadow = true;
+            group.add(base);
+
+            const torso = new THREE.Mesh(
+                new THREE.BoxGeometry(1.0, 1.6, 0.7),
+                metal
+            );
+            torso.position.y = 1.35;
+            torso.castShadow = true;
+            group.add(torso);
+
+            const chestLight = new THREE.Mesh(
+                new THREE.BoxGeometry(0.28, 0.28, 0.05),
+                glow
+            );
+            chestLight.position.set(0, 1.45, 0.38);
+            group.add(chestLight);
+
+            const head = new THREE.Mesh(
+                new THREE.BoxGeometry(0.65, 0.55, 0.55),
+                metal
+            );
+            head.position.y = 2.45;
+            head.castShadow = true;
+            group.add(head);
+
+            const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), glow);
+            eyeL.position.set(-0.12, 2.48, 0.29);
+            group.add(eyeL);
+
+            const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 12), glow);
+            eyeR.position.set(0.12, 2.48, 0.29);
+            group.add(eyeR);
+
+            const rightArmPivot = new THREE.Group();
+            rightArmPivot.position.set(0.65, 1.9, 0);
+            group.add(rightArmPivot);
+
+            const upperArm = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.11, 0.11, 0.8, 16),
+                darkMetal
+            );
+            upperArm.rotation.z = Math.PI / 2;
+            upperArm.position.x = 0.4;
+            upperArm.castShadow = true;
+            rightArmPivot.add(upperArm);
+
+            const foreArmPivot = new THREE.Group();
+            foreArmPivot.position.set(0.8, 0, 0);
+            rightArmPivot.add(foreArmPivot);
+
+            const foreArm = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.09, 0.09, 0.75, 16),
+                metal
+            );
+            foreArm.rotation.z = Math.PI / 2;
+            foreArm.position.x = 0.36;
+            foreArm.castShadow = true;
+            foreArmPivot.add(foreArm);
+
+            const hand = new THREE.Mesh(
+                new THREE.BoxGeometry(0.18, 0.18, 0.18),
+                glow
+            );
+            hand.position.set(0.76, 0, 0);
+            foreArmPivot.add(hand);
+
+            scene.add(group);
+
+            robot = group;
+            robotParts = {
+                rightArmPivot,
+                foreArmPivot,
+                hand,
+                head,
+                chestLight
+            };
+
+            robotParts.rightArmPivot.rotation.z = -0.25;
+            robotParts.foreArmPivot.rotation.z = 0.15;
+        }
+
+        // ========== TEXTURE MANAGEMENT ==========
+        function captureAndCreateTexture() {
+            const canvas = cameraCanvas;
+
+            if (!canvas) {
+                console.warn('Camera canvas not available');
+                return new THREE.CanvasTexture(document.createElement('canvas'));
+            }
+
+            try {
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                return texture;
+            } catch (e) {
+                console.warn('Texture creation failed:', e);
+                return new THREE.CanvasTexture(document.createElement('canvas'));
+            }
+        }
+
+        function createScannedObject(label) {
+            const l = label.toLowerCase();
+            const cameraTexture = captureAndCreateTexture();
+            let mesh;
+
+            if (l.includes('papier')) {
+                mesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.2, 0.25, 0.9),
+                    new THREE.MeshPhongMaterial({
+                        map: cameraTexture,
+                        shininess: 40
+                    })
+                );
+            } else if (l.includes('plastik')) {
+                mesh = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.35, 0.35, 1.3, 24),
+                    new THREE.MeshPhongMaterial({
+                        map: cameraTexture,
+                        transparent: true,
+                        opacity: 0.95,
+                        shininess: 120
+                    })
+                );
+            } else if (l.includes('müll') || l.includes('muell')) {
+                mesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.5, 24, 24),
+                    new THREE.MeshPhongMaterial({
+                        map: cameraTexture,
+                        shininess: 80
+                    })
+                );
+            } else {
+                mesh = new THREE.Mesh(
+                    new THREE.DodecahedronGeometry(0.5),
+                    new THREE.MeshPhongMaterial({
+                        map: cameraTexture,
+                        shininess: 80
+                    })
+                );
+            }
+
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+
+        // ========== ANIMATION FUNCTIONS ==========
+        function placeObjectOnTable(label) {
+            if (currentTableObject) {
+                scene.remove(currentTableObject);
+                currentTableObject = null;
+            }
+
+            const obj = createScannedObject(label);
+            obj.position.set(
+                scanTable.group.position.x,
+                scanTable.group.position.y + 2.22,
+                scanTable.group.position.z
+            );
+
+            obj.scale.set(0, 0, 0);
+            scene.add(obj);
+            currentTableObject = obj;
+
+            gsap.to(obj.scale, {
+                x: 1,
+                y: 1,
+                z: 1,
+                duration: 0.8,
+                ease: 'back.out(2)'
+            });
+
+            gsap.to(obj.rotation, {
+                y: Math.PI * 2,
+                duration: 2.0,
+                ease: 'power2.out'
+            });
+
+            gsap.to(scanTable.rimMat, {
+                emissiveIntensity: 1.0,
+                duration: 0.15,
+                yoyo: true,
+                repeat: 1
+            });
+
+            return obj;
         }
 
         function openLid(binKey) {
-            return new Promise(resolve => {
-                const bin = bins[binKey];
-                if (!bin) return resolve();
+            const bin = bins[binKey];
+            if (!bin) return Promise.resolve();
 
-                // Bin aufleuchten
-                gsap.to(bin.group.position, { y: bin.baseY + 0.3, duration: 0.3, ease: "back.out(2)" });
-
-                // Deckel öffnen
+            return new Promise((resolve) => {
                 gsap.to(bin.lidPivot.rotation, {
                     x: -Math.PI / 2,
                     duration: 0.6,
-                    ease: "back.out(1.5)",
+                    ease: 'back.out(1.5)',
                     onComplete: resolve
                 });
             });
@@ -317,48 +858,277 @@
 
         function closeLid(binKey) {
             const bin = bins[binKey];
-            if (!bin) return;
-            gsap.to(bin.lidPivot.rotation, { x: 0, duration: 0.5, ease: "power2.inOut" });
-            gsap.to(bin.group.position, { y: bin.baseY, duration: 0.4, delay: 0.3, ease: "power2.inOut" });
-        }
+            if (!bin) return Promise.resolve();
 
-        function throwBall(binKey) {
-            return new Promise(resolve => {
-                const bin = bins[binKey];
-                const targetX = bin.group.position.x;
-
-                const ball = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.25, 24, 24),
-                    new THREE.MeshPhongMaterial({ color: bin.color, emissive: bin.color, emissiveIntensity: 0.3 })
-                );
-                ball.position.set(-9, 1, 0);
-                ball.castShadow = true;
-                scene.add(ball);
-
-                // Parabolische Bahn
-                const startX = -9, endX = targetX;
-                const startY = 1, endY = 3.2;
-                let progress = 0;
-
-                gsap.to({ p: 0 }, {
-                    p: 1,
-                    duration: 1.0,
-                    ease: "power1.inOut",
-                    onUpdate: function() {
-                        progress = this.targets()[0].p;
-                        ball.position.x = startX + (endX - startX) * progress;
-                        ball.position.y = startY + (endY - startY) * Math.sin(progress * Math.PI) * 1.2 + (endY - startY) * progress * 0.3;
-                        ball.rotation.z += 0.15;
-                    },
-                    onComplete: () => {
-                        scene.remove(ball);
-                        resolve();
-                    }
+            return new Promise((resolve) => {
+                gsap.to(bin.lidPivot.rotation, {
+                    x: 0,
+                    duration: 0.5,
+                    ease: 'power2.inOut',
+                    onComplete: resolve
                 });
             });
         }
 
+        // ========== HAUPTANIMATION: robotSortObject ==========
+        async function robotSortObject(binKey) {
+            if (!currentTableObject) return;
+
+            const bin = bins[binKey];
+            const obj = currentTableObject;
+            const tablePos = scanTable.group.position;
+            const tableY = tablePos.y + 2.25;
+            const binHeight = bin.group.position.y + 3.25;
+
+            const tl = gsap.timeline();
+
+            // Phase 1: Roboter zum Tisch
+            tl.to(
+                robot.position,
+                {
+                    x: tablePos.x + 1.2,
+                    z: tablePos.z - 1.5,
+                    duration: 0.8,
+                    ease: 'power2.inOut'
+                },
+                'walk_to_table'
+            );
+
+            tl.to(
+                robotParts.rightArmPivot.rotation,
+                {
+                    z: -1.3,
+                    duration: 0.5,
+                    ease: 'power2.out'
+                },
+                'walk_to_table+=0.3'
+            );
+
+            tl.to(
+                robotParts.foreArmPivot.rotation,
+                {
+                    z: 0.7,
+                    duration: 0.5,
+                    ease: 'power2.out'
+                },
+                'walk_to_table+=0.3'
+            );
+
+            // Phase 2: Hand schließt
+            tl.to(
+                robotParts.hand.scale,
+                {
+                    x: 0.7,
+                    y: 0.7,
+                    z: 0.7,
+                    duration: 0.3,
+                    ease: 'back.in(1.5)'
+                },
+                'walk_to_table+=0.6'
+            );
+
+            // Phase 3: Objekt greifen
+            tl.add(() => {
+                robotParts.foreArmPivot.add(obj);
+                obj.position.set(0.76, 0, 0);
+                obj.scale.set(0.8, 0.8, 0.8);
+            }, 'walk_to_table+=0.7');
+
+            // Phase 4: Arm heben
+            tl.to(
+                robotParts.rightArmPivot.rotation,
+                {
+                    z: -0.8,
+                    duration: 0.4,
+                    ease: 'power2.out'
+                },
+                'pickup_done'
+            );
+
+            tl.to(
+                robotParts.foreArmPivot.rotation,
+                {
+                    z: 0.3,
+                    duration: 0.4,
+                    ease: 'power2.out'
+                },
+                'pickup_done'
+            );
+
+            // Phase 5: Zur Bin laufen
+            tl.to(
+                robot.position,
+                {
+                    x: bin.group.position.x - 1.2,
+                    z: bin.group.position.z + 2.5,
+                    duration: 1.0,
+                    ease: 'power2.inOut'
+                },
+                'walk_to_bin'
+            );
+
+            tl.to(
+                robot.rotation,
+                {
+                    y: Math.PI * 0.35,
+                    duration: 0.6,
+                    ease: 'power2.inOut'
+                },
+                'walk_to_bin+=0.1'
+            );
+
+            // Phase 6: Lid öffnen
+            tl.add(async () => {
+                await openLid(binKey);
+            }, 'walk_to_bin+=0.5');
+
+            // Phase 7: Wurfposition
+            tl.to(
+                robotParts.rightArmPivot.rotation,
+                {
+                    z: -2.2,
+                    duration: 0.4,
+                    ease: 'power2.out'
+                },
+                'walk_to_bin+=0.6'
+            );
+
+            tl.to(
+                robotParts.foreArmPivot.rotation,
+                {
+                    z: 0.5,
+                    duration: 0.4,
+                    ease: 'power2.out'
+                },
+                '<'
+            );
+
+            // Phase 8: Hand öffnet
+            tl.add(() => {
+                scene.attach(obj);
+                const worldPos = new THREE.Vector3();
+                obj.getWorldPosition(worldPos);
+                obj.position.copy(worldPos);
+            });
+
+            tl.to(robotParts.hand.scale, {
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+                duration: 0.2,
+                ease: 'back.out(2)'
+            });
+
+            // Phase 9: Objekt werfen
+            tl.to(
+                obj.position,
+                {
+                    x: bin.group.position.x,
+                    z: bin.group.position.z,
+                    duration: 1.0,
+                    ease: 'power1.inOut'
+                },
+                '<'
+            );
+
+            tl.to(
+                obj.position,
+                {
+                    y: binHeight - 0.5,
+                    duration: 1.0,
+                    ease: 'power1.in'
+                },
+                '<'
+            );
+
+            tl.to(
+                obj.rotation,
+                {
+                    x: '+=' + Math.PI * 1.2,
+                    z: '+=' + Math.PI * 1.1,
+                    duration: 1.0,
+                    ease: 'none'
+                },
+                '<'
+            );
+
+            // Phase 10: Cleanup
+            tl.add(() => {
+                scene.remove(obj);
+                currentTableObject = null;
+            });
+
+            // Phase 11: Roboter zurück
+            tl.to(
+                robot.rotation,
+                {
+                    y: 0,
+                    duration: 0.5,
+                    ease: 'power2.inOut'
+                },
+                'robot_return'
+            );
+
+            tl.to(
+                robotParts.rightArmPivot.rotation,
+                {
+                    z: -0.25,
+                    duration: 0.4,
+                    ease: 'power2.inOut'
+                },
+                'robot_return'
+            );
+
+            tl.to(
+                robotParts.foreArmPivot.rotation,
+                {
+                    z: 0.15,
+                    duration: 0.4,
+                    ease: 'power2.inOut'
+                },
+                'robot_return'
+            );
+
+            tl.to(
+                robot.position,
+                {
+                    x: -2.2,
+                    z: 1.2,
+                    duration: 0.9,
+                    ease: 'power2.inOut'
+                },
+                'robot_return'
+            );
+
+            // Phase 12: Lid schließen
+            tl.add(async () => {
+                document.getElementById('resultPanel').classList.remove('active');
+                await closeLid(binKey);
+            }, 'robot_return+=0.3');
+
+            return tl;
+        }
+
+        // ========== MAIN CAPTURE & CLASSIFY ==========
         async function captureAndClassify() {
+            // AGGRESSIVELY stop dance mode and remove ALL lights
+            danceMode = false;
+
+            // Remove ALL lights from scene immediately
+            const allLights = scene.children.filter((child) => child instanceof THREE.Light);
+
+            allLights.forEach((light) => {
+                if (light !== window.sun && !(light instanceof THREE.AmbientLight)) {
+                    scene.remove(light);
+                    light.intensity = 0;
+                }
+            });
+
+            // Also run disable function
+            disableDanceLighting();
+            document.getElementById('resultPanel').classList.remove('active');
+            document.getElementById('status').textContent = 'Scanning...';
+
             const btn = document.getElementById('scanBtn');
             const loading = document.getElementById('loading');
             btn.disabled = true;
@@ -366,7 +1136,12 @@
             document.getElementById('status').textContent = 'Scanning...';
 
             try {
-                const res = await fetch('/api/classify', { method: 'POST' });
+                const res = await fetch('http://localhost:5000/api/classify', { method: 'POST' });
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}`);
+                }
+
                 const data = await res.json();
 
                 if (data.success) {
@@ -374,41 +1149,684 @@
                     const binKey = getBinKey(data.label);
 
                     document.getElementById('lastClass').textContent = data.label;
-                    document.getElementById('lastConfidence').textContent = (data.confidence * 100).toFixed(1) + '%';
+                    document.getElementById('lastConfidence').textContent =
+                        (data.confidence * 100).toFixed(1) + '%';
                     document.getElementById('scanCount').textContent = scanCount;
                     document.getElementById('status').textContent = 'Done';
 
-                    // Alten Bin schließen
-                    if (activeBin) closeLid(activeBin);
+                    if (activeBin) await closeLid(activeBin);
 
-                    // Deckel öffnen dann Ball werfen
-                    await openLid(binKey);
-                    await throwBall(binKey);
+                    placeObjectOnTable(data.label);
+                    await new Promise((r) => setTimeout(r, 450));
+
+                    await robotSortObject(binKey);
                     activeBin = binKey;
 
-                    // Result Panel
-                    document.getElementById('resultLabel').textContent = data.label + ' → ' + binKey.toUpperCase();
-                    document.getElementById('resultConfidenceText').textContent = 'Confidence: ' + (data.confidence * 100).toFixed(1) + '%';
-                    document.getElementById('confidenceFill').style.width = (data.confidence * 100) + '%';
-                    document.getElementById('resultPanel').classList.add('active');
+                    const binLabels = {
+                        papier: 'Papier',
+                        muell: 'Plastik',
+                        sonstiges: 'Restmüll'
+                    };
 
+                    document.getElementById('resultLabel').textContent = binLabels[binKey];
+                    document.getElementById('resultConfidenceText').textContent =
+                        'Confidence: ' + (data.confidence * 100).toFixed(1) + '%';
+                    document.getElementById('confidenceFill').style.width =
+                        data.confidence * 100 + '%';
+                    document.getElementById('resultPanel').classList.add('active');
                 } else {
-                    document.getElementById('status').textContent = 'Fehler';
+                    document.getElementById('status').textContent =
+                        'Fehler: ' + (data.error || 'Unbekannt');
                 }
-            } catch {
-                document.getElementById('status').textContent = 'Verbindungsfehler';
+            } catch (err) {
+                console.error('Classification error:', err);
+                document.getElementById('status').textContent = 'Error: ' + err.message;
             }
 
             btn.disabled = false;
             loading.classList.remove('active');
         }
 
-        function resetAnimation() {
+        // ========== RESET ANIMATION ==========
+        async function resetAnimation() {
+            // Remove all dance lights
+            const allLights = scene.children.filter((child) => child instanceof THREE.Light);
+
+            allLights.forEach((light) => {
+                if (light !== window.sun && !(light instanceof THREE.AmbientLight)) {
+                    scene.remove(light);
+                    light.intensity = 0;
+                }
+            });
+
+            danceMode = false;
+            disableDanceLighting();
             document.getElementById('resultPanel').classList.remove('active');
-            Object.keys(bins).forEach(k => closeLid(k));
+
+            const closeLidPromises = Object.keys(bins).map((k) => closeLid(k));
+            await Promise.all(closeLidPromises);
+
             activeBin = null;
+
+            if (currentTableObject) {
+                scene.remove(currentTableObject);
+                currentTableObject = null;
+            }
+
+            if (robot && robotParts.rightArmPivot && robotParts.foreArmPivot) {
+                gsap.to(robot.position, {
+                    x: -2.2,
+                    z: 1.2,
+                    duration: 0.4,
+                    ease: 'power2.inOut'
+                });
+
+                gsap.to(
+                    robot.rotation,
+                    {
+                        y: 0,
+                        duration: 0.3
+                    },
+                    0
+                );
+
+                gsap.to(
+                    robotParts.rightArmPivot.rotation,
+                    {
+                        z: -0.25,
+                        duration: 0.3
+                    },
+                    0
+                );
+
+                gsap.to(
+                    robotParts.foreArmPivot.rotation,
+                    {
+                        z: 0.15,
+                        duration: 0.3
+                    },
+                    0
+                );
+
+                gsap.to(
+                    robotParts.hand.scale,
+                    {
+                        x: 1,
+                        y: 1,
+                        z: 1,
+                        duration: 0.3
+                    },
+                    0
+                );
+            }
         }
 
+        // ========== MUSIC & AUDIO SYSTEM ==========
+        let audioContext = null;
+        let oscillator = null;
+        let gainNode = null;
+        let isAudioPlaying = false;
+
+        function initAudio() {
+            if (audioContext) return;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioContext.createGain();
+            gainNode.connect(audioContext.destination);
+            gainNode.gain.value = 0.1; // Leise halten
+        }
+
+        function playBeep(frequency, duration) {
+            if (!audioContext) initAudio();
+
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+
+            osc.frequency.value = frequency;
+            osc.type = 'sine';
+
+            gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+            osc.start(audioContext.currentTime);
+            osc.stop(audioContext.currentTime + duration);
+        }
+
+        function playDanceMusic() {
+            if (!audioContext) initAudio();
+            if (isAudioPlaying) return;
+
+            isAudioPlaying = true;
+
+            const now = audioContext.currentTime;
+            const tempo = 0.25; // Beat timing
+
+            // Bass line
+            const bassNotes = [60, 60, 65, 65]; // Hz values (A, A, C#, C#)
+            for (let i = 0; i < 16; i++) {
+                const note = bassNotes[i % 4] * Math.pow(2, Math.floor(i / 4));
+                setTimeout(() => playBeep(note, 0.15), i * 250);
+            }
+
+            // Melody line
+            setTimeout(() => {
+                const melodyNotes = [100, 120, 130, 120];
+                for (let i = 0; i < 8; i++) {
+                    const note = melodyNotes[i % 4];
+                    setTimeout(() => playBeep(note, 0.1), i * 250);
+                }
+            }, 500);
+
+            isAudioPlaying = false;
+        }
+
+        // ========== DYNAMIC LIGHTING SYSTEM ==========
+        const lights = {
+            strobes: [],
+            spotlights: []
+        };
+
+        function initDanceLighting() {
+            // Strobe lights (rote & blaue)
+            const strobeLeft = new THREE.PointLight(0xff0000, 2, 20);
+            strobeLeft.position.set(-8, 3, 0);
+            strobeLeft.castShadow = true;
+            scene.add(strobeLeft);
+            lights.strobes.push({ light: strobeLeft, color: 0xff0000, intensity: 2 });
+
+            const strobeRight = new THREE.PointLight(0x0088ff, 2, 20);
+            strobeRight.position.set(8, 3, 0);
+            strobeRight.castShadow = true;
+            scene.add(strobeRight);
+            lights.strobes.push({ light: strobeRight, color: 0x0088ff, intensity: 2 });
+
+            // Green spotlight on robot
+            const robotSpotlight = new THREE.SpotLight(0x00ff88, 3, 15, Math.PI / 4, 0.5, 1);
+            robotSpotlight.position.set(-2.2, 5, 1.2);
+            robotSpotlight.target = robot;
+            robotSpotlight.castShadow = true;
+            scene.add(robotSpotlight);
+            lights.spotlights.push(robotSpotlight);
+
+            // Purple overhead
+            const overheadLight = new THREE.PointLight(0xff00ff, 1.5, 25);
+            overheadLight.position.set(0, 6, 0);
+            scene.add(overheadLight);
+            lights.strobes.push({ light: overheadLight, color: 0xff00ff, intensity: 1.5 });
+
+            // Yellow accent
+            const accentLight = new THREE.PointLight(0xffff00, 1.2, 20);
+            accentLight.position.set(0, 4, -8);
+            scene.add(accentLight);
+            lights.strobes.push({ light: accentLight, color: 0xffff00, intensity: 1.2 });
+        }
+
+        function strobeEffect() {
+            const t = Date.now() * 0.005;
+
+            lights.strobes.forEach((strobeData, idx) => {
+                const strobe = strobeData.light;
+                const baseIntensity = strobeData.intensity;
+
+                // Rapid on-off strobe effect
+                const strobeFrequency = 8 + idx * 1.5;
+                const strobeFactor = Math.abs(Math.sin(t * strobeFrequency)) > 0.5 ? 1 : 0.1;
+
+                strobe.intensity = baseIntensity * strobeFactor;
+
+                // Random color shifts
+                if (Math.random() > 0.95) {
+                    const colors = [0xff0000, 0x0088ff, 0xff00ff, 0xffff00, 0x00ff88];
+                    strobe.color.setHex(colors[Math.floor(Math.random() * colors.length)]);
+                }
+            });
+
+            // Spotlight pulse
+            if (lights.spotlights[0]) {
+                lights.spotlights[0].intensity = 2 + Math.sin(t * 3) * 1.5;
+            }
+        }
+
+        function disableDanceLighting() {
+            console.log('Disabling dance lights...');
+
+            // Remove ALL lights from the scene that are not sun or ambientLight
+            const allLights = scene.children.filter(
+                (child) =>
+                    child instanceof THREE.Light &&
+                    child !== window.sun &&
+                    !(child instanceof THREE.AmbientLight)
+            );
+
+            allLights.forEach((light) => {
+                light.intensity = 0;
+                scene.remove(light);
+            });
+
+            // Clear strobe array
+            lights.strobes.forEach((strobeData) => {
+                strobeData.light.intensity = 0;
+            });
+            lights.strobes = [];
+
+            // Clear spotlight array
+            lights.spotlights.forEach((light) => {
+                light.intensity = 0;
+            });
+            lights.spotlights = [];
+
+            console.log('✓ All dance lights disabled and removed');
+        }
+
+        // ========== DANCE MODE SYSTEM ==========
+        let danceMode = false;
+
+        async function triggerDanceMode() {
+            if (danceMode) return;
+            danceMode = true;
+
+            console.log('🎉 DANCE MODE ACTIVATED!');
+            document.getElementById('status').textContent = '🎉 DANCING!';
+
+            // Start music and lights
+            initAudio();
+            playDanceMusic();
+            initDanceLighting();
+
+            const danceRoutines = [
+                danceSpinAndWave,
+                danceBodyRoll,
+                danceHipHop,
+                danceRobotWalk,
+                danceFullCrazy
+            ];
+
+            const selectedDance =
+                danceRoutines[Math.floor(Math.random() * danceRoutines.length)];
+            await selectedDance();
+
+            // Disable dance mode and lights BEFORE returning to idle
+            danceMode = false;
+            disableDanceLighting();
+            document.getElementById('status').textContent = 'Ready';
+
+            // Return to idle position
+            gsap.to(robot.position, { x: -2.2, z: 1.2, duration: 1, ease: 'power2.inOut' });
+            gsap.to(robot.rotation, { x: 0, y: 0, z: 0, duration: 0.8 });
+            gsap.to(robotParts.rightArmPivot.rotation, {
+                x: 0,
+                y: 0,
+                z: -0.25,
+                duration: 0.8
+            });
+            gsap.to(robotParts.foreArmPivot.rotation, { x: 0, y: 0, z: 0.15, duration: 0.8 });
+        }
+
+        async function danceSpinAndWave() {
+            const tl = gsap.timeline();
+
+            for (let i = 0; i < 3; i++) {
+                tl.to(robot.rotation, {
+                    y: Math.PI * 2,
+                    duration: 1.5,
+                    ease: 'power1.inOut'
+                });
+                tl.to(
+                    robotParts.rightArmPivot.rotation,
+                    {
+                        z: Math.sin(i) * 0.8 - 0.25,
+                        x: Math.cos(i * 0.5) * 0.5,
+                        duration: 1.5,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+                tl.to(
+                    robotParts.foreArmPivot.rotation,
+                    {
+                        z: Math.cos(i) * 1.2 + 0.15,
+                        duration: 1.5,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+                tl.to(
+                    robotParts.head.rotation,
+                    {
+                        y: Math.sin(i) * 0.3,
+                        duration: 1.5,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+            }
+
+            await tl;
+        }
+
+        async function danceBodyRoll() {
+            const tl = gsap.timeline();
+
+            for (let i = 0; i < 4; i++) {
+                tl.to(robot.rotation, {
+                    z: Math.sin((i * Math.PI) / 2) * 0.3,
+                    duration: 0.8,
+                    ease: 'sine.inOut'
+                });
+                tl.to(
+                    robotParts.rightArmPivot.rotation,
+                    {
+                        z: -1.5 + Math.sin((i * Math.PI) / 2) * 0.5,
+                        x: Math.cos((i * Math.PI) / 2) * 0.4,
+                        duration: 0.8,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+                tl.to(
+                    robotParts.foreArmPivot.rotation,
+                    {
+                        z: 0.8 + Math.cos((i * Math.PI) / 2) * 0.4,
+                        duration: 0.8,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+                tl.to(
+                    robot.position,
+                    {
+                        x: -2.2 + Math.sin((i * Math.PI) / 2) * 0.8,
+                        duration: 0.8,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+                tl.to(
+                    robotParts.hand.scale,
+                    {
+                        x: 0.5 + Math.abs(Math.sin((i * Math.PI) / 2)) * 0.5,
+                        y: 0.5 + Math.abs(Math.sin((i * Math.PI) / 2)) * 0.5,
+                        z: 0.5 + Math.abs(Math.sin((i * Math.PI) / 2)) * 0.5,
+                        duration: 0.4,
+                        ease: 'power2.out'
+                    },
+                    '<'
+                );
+            }
+
+            await tl;
+        }
+
+        async function danceHipHop() {
+            const tl = gsap.timeline();
+
+            for (let i = 0; i < 8; i++) {
+                const bounce = Math.sin((i * Math.PI) / 4);
+
+                tl.to(robot.position, {
+                    y: -2.5 + Math.max(0, bounce) * 0.4,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+
+                tl.to(
+                    robotParts.head.rotation,
+                    {
+                        x: bounce * 0.3,
+                        y: Math.cos((i * Math.PI) / 4) * 0.2,
+                        duration: 0.3,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(
+                    robotParts.rightArmPivot.rotation,
+                    {
+                        z: -1.2 + bounce * 0.8,
+                        x: Math.sin((i * Math.PI) / 4) * 0.6,
+                        duration: 0.3,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(
+                    robotParts.foreArmPivot.rotation,
+                    {
+                        z: 0.5 + Math.cos((i * Math.PI) / 4) * 0.7,
+                        duration: 0.3,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(
+                    robot.position,
+                    {
+                        x: -2.2 + Math.sin(i * 0.7) * 1.2,
+                        z: 1.2 + Math.cos(i * 0.5) * 0.8,
+                        duration: 0.3,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+            }
+
+            await tl;
+        }
+
+        async function danceRobotWalk() {
+            const tl = gsap.timeline();
+
+            for (let i = 0; i < 6; i++) {
+                const direction = i % 2 === 0 ? 1 : -1;
+
+                tl.to(robot.position, {
+                    x: -2.2 + direction * 2.0,
+                    duration: 0.5,
+                    ease: 'steps(4)'
+                });
+
+                tl.to(
+                    robotParts.rightArmPivot.rotation,
+                    {
+                        z: direction > 0 ? -1.5 : -0.2,
+                        duration: 0.5,
+                        ease: 'power1.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(
+                    robotParts.foreArmPivot.rotation,
+                    {
+                        z: direction > 0 ? 0.2 : 1.2,
+                        duration: 0.5,
+                        ease: 'power1.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(
+                    robotParts.head.rotation,
+                    {
+                        y: direction * 0.4,
+                        x: Math.sin(i) * 0.2,
+                        duration: 0.5,
+                        ease: 'power1.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(
+                    robot.rotation,
+                    {
+                        y: direction * 0.2,
+                        z: direction * 0.15,
+                        duration: 0.5,
+                        ease: 'power1.inOut'
+                    },
+                    '<'
+                );
+            }
+
+            await tl;
+        }
+
+        async function danceFullCrazy() {
+            const tl = gsap.timeline();
+
+            for (let cycle = 0; cycle < 5; cycle++) {
+                tl.to(robot.rotation, {
+                    y: Math.PI * 3,
+                    z: Math.sin(cycle) * 0.5,
+                    duration: 1.2,
+                    ease: 'power1.inOut'
+                });
+
+                tl.to(
+                    robotParts.rightArmPivot.rotation,
+                    {
+                        z: Math.sin(cycle * 2) * 2,
+                        x: Math.cos(cycle * 1.5) * 1.2,
+                        y: Math.sin(cycle * 0.8) * 0.8,
+                        duration: 1.2,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(
+                    robotParts.foreArmPivot.rotation,
+                    {
+                        z: Math.cos(cycle * 2.5) * 1.5,
+                        x: Math.sin(cycle * 1.2) * 0.8,
+                        duration: 1.2,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+
+                const randomX = (Math.random() - 0.5) * 4;
+                const randomZ = (Math.random() - 0.5) * 3;
+
+                tl.to(
+                    robot.position,
+                    {
+                        x: -2.2 + randomX,
+                        z: 1.2 + randomZ,
+                        y: -2.5 + Math.abs(Math.sin(cycle)) * 0.3,
+                        duration: 1.2,
+                        ease: 'power1.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(
+                    robotParts.head.rotation,
+                    {
+                        x: Math.sin(cycle * 3) * 0.6,
+                        y: Math.cos(cycle * 2.5) * 0.8,
+                        z: Math.sin(cycle * 1.8) * 0.4,
+                        duration: 1.2,
+                        ease: 'sine.inOut'
+                    },
+                    '<'
+                );
+
+                tl.to(robotParts.hand.scale, {
+                    x: 0.3 + Math.random() * 0.7,
+                    y: 0.3 + Math.random() * 0.7,
+                    z: 0.3 + Math.random() * 0.7,
+                    duration: 0.3,
+                    ease: 'back.inOut'
+                });
+
+                tl.to(
+                    robotParts.chestLight.material,
+                    {
+                        emissiveIntensity: Math.random(),
+                        duration: 0.2
+                    },
+                    '<'
+                );
+            }
+
+            await tl;
+        }
+
+        // ========== ANIMATION LOOP ==========
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = Date.now() * 0.001;
+
+            // Bins floating
+            Object.entries(bins).forEach(([, bin], i) => {
+                bin.group.position.y = bin.baseY + Math.sin(t + i * 1.2) * 0.04;
+            });
+
+            // Scan table hologram
+            if (scanTable) {
+                scanTable.holo.rotation.z += 0.01;
+                scanTable.holo.position.y =
+                    scanTable.group.position.y + 2.35 + Math.sin(t * 2.0) * 0.05;
+            }
+
+            // Strobe effects during dance
+            if (danceMode && lights.strobes.length > 0) {
+                strobeEffect();
+            }
+
+            // Robot idle (skip if dancing)
+            if (robot && !danceMode) {
+                robot.position.y = -2.5 + Math.sin(t * 1.8) * 0.03;
+
+                if (robotParts.head) {
+                    robotParts.head.rotation.y = Math.sin(t * 1.3) * 0.08;
+                }
+
+                if (robotParts.chestLight) {
+                    const intensity = 0.6 + Math.sin(t * 3.0) * 0.15;
+                    robotParts.chestLight.material.emissiveIntensity = intensity;
+                }
+            }
+
+            // Table object animation
+            if (currentTableObject && currentTableObject.parent === scene) {
+                currentTableObject.position.y += Math.sin(t * 3.0) * 0.0015;
+                currentTableObject.rotation.y += 0.01;
+            }
+
+            renderer.render(scene, cam);
+        }
+
+        // ========== CLICK HANDLER für DANCE MODE ==========
+        document.getElementById('canvasContainer').addEventListener('click', (event) => {
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
+            const container = document.getElementById('canvasContainer');
+            const rect = container.getBoundingClientRect();
+
+            mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, cam);
+
+            const robotObjects = [robot, ...Object.values(robotParts).filter((p) => p instanceof THREE.Object3D)];
+            const intersects = raycaster.intersectObjects(robotObjects, true);
+
+            if (intersects.length > 0) {
+                triggerDanceMode();
+                console.log("✨ ROBOT CLICKED - LET'S DANCE!");
+            }
+        });
+
+        // ========== INIT ==========
+        initCameraStream();
         initScene();
     </script>
 </body>
